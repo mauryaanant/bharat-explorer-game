@@ -28,7 +28,8 @@
         body {
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #831843 100%);
             color: var(--text-main);
-            height: 100vh;
+            height: 100dvh; 
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -39,7 +40,7 @@
         #app-container {
             width: 100%;
             height: 100%;
-            max-width: 480px; /* Constrains width on laptops */
+            max-width: 480px; 
             background: var(--bg-color);
             display: flex;
             flex-direction: column;
@@ -48,7 +49,6 @@
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
 
-        /* Give it rounded corners and floating look ONLY on laptops/tablets */
         @media (min-width: 500px) {
             #app-container {
                 height: 90vh;
@@ -135,6 +135,7 @@
             display: flex;
             flex-direction: column;
             background: var(--bg-color);
+            min-height: 0; 
         }
 
         .level-info {
@@ -150,7 +151,6 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            flex: 1;
         }
 
         /* Card Animations & Styling */
@@ -191,19 +191,13 @@
             font-weight: 400;
         }
 
-        /* --- Footer Controls --- */
-        .controls-footer {
-            background: white;
-            padding: 20px;
-            box-shadow: 0 -4px 25px rgba(0,0,0,0.05);
-            z-index: 10;
-        }
-
+        /* --- Pagination Controls (Now placed directly under pallets) --- */
         .pagination {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-top: 25px;
+            padding-bottom: 20px;
         }
 
         .icon-btn {
@@ -214,11 +208,19 @@
             font-weight: bold;
             color: var(--text-main);
             cursor: pointer;
-            transition: background 0.2s ease;
+            transition: all 0.2s ease;
         }
         
         .icon-btn:active { transform: scale(0.95); }
         .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Dynamic Proceed State for the Next Button */
+        .icon-btn.proceed-mode {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+            animation: popIn 0.3s ease;
+        }
 
         .page-indicator {
             font-size: 1rem;
@@ -239,7 +241,6 @@
             box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
         .action-btn:active { transform: scale(0.98); }
 
         /* --- Animations --- */
@@ -305,8 +306,16 @@
                 <h2 id="level-title">Level 1: States</h2>
                 <p id="level-desc">Tap the states you've visited.</p>
             </div>
+            
             <div class="options-container" id="options-container">
                 <!-- Cards injected here -->
+            </div>
+
+            <!-- Pagination is now directly under the options -->
+            <div class="pagination" id="pagination-controls">
+                <button class="icon-btn" id="btn-prev" onclick="changePage(-1)">◀ Prev</button>
+                <span class="page-indicator" id="page-indicator">1 / 5</span>
+                <button class="icon-btn" id="btn-next">Next ▶</button>
             </div>
         </main>
 
@@ -317,20 +326,10 @@
             <p id="res-summary" style="color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem; line-height: 1.6;"></p>
             <button class="action-btn" onclick="location.reload()" style="max-width: 80%;">Play Again</button>
         </div>
-
-        <div class="controls-footer" id="controls-footer">
-            <div class="pagination" id="pagination-controls">
-                <button class="icon-btn" id="btn-prev" onclick="changePage(-1)">◀ Prev</button>
-                <span class="page-indicator" id="page-indicator">1 / 5</span>
-                <button class="icon-btn" id="btn-next" onclick="changePage(1)">Next ▶</button>
-            </div>
-            <button class="action-btn" id="btn-proceed" onclick="proceedToNextLevel()">Proceed ➔</button>
-        </div>
     </div>
 
     <script>
-        // --- SYNTHESIZED AUDIO ENGINE (Web Audio API) ---
-        // Generates sounds dynamically so we don't need external files!
+        // --- SYNTHESIZED AUDIO ENGINE ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playTone(freq, type, duration, vol=0.1) {
@@ -363,7 +362,7 @@
             }
         };
 
-        // --- EXPANDED DATABASE ---
+        // --- DATABASE ---
         const indiaDatabase = {
             states: {
                 "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Tirupati", "Guntur", "Nellore"],
@@ -424,24 +423,20 @@
             gameState.currentPage = 0;
             const title = document.getElementById('level-title');
             const desc = document.getElementById('level-desc');
-            const btnProceed = document.getElementById('btn-proceed');
 
             if (gameState.level === 1) {
                 title.textContent = "Level 1: States";
                 desc.textContent = "Select the states you've visited. (+100 pts)";
                 gameState.currentList = Object.keys(indiaDatabase.states).map(name => ({ id: name, display: name, type: 'state' }));
-                btnProceed.textContent = "Proceed to UTs ➔";
             } 
             else if (gameState.level === 2) {
                 title.textContent = "Level 2: Union Territories";
                 desc.textContent = "Any Union Territories visited? (+100 pts)";
                 gameState.currentList = Object.keys(indiaDatabase.uts).map(name => ({ id: name, display: name, type: 'ut' }));
-                btnProceed.textContent = "Proceed to Cities ➔";
             } 
             else if (gameState.level === 3) {
                 title.textContent = "Level 3: Deep Dive";
                 desc.textContent = "Which specific cities did you explore? (+50 pts)";
-                btnProceed.textContent = "Calculate Final Score ➔";
                 
                 let cityArray = [];
                 gameState.selectedItems.forEach(id => {
@@ -466,7 +461,7 @@
             pageItems.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = `option-card ${gameState.selectedItems.has(item.id) ? 'selected' : ''}`;
-                card.style.animationDelay = `${index * 0.05}s`; // Staggered animation
+                card.style.animationDelay = `${index * 0.05}s`;
                 
                 if (item.type === 'city') card.innerHTML = `${item.display} <span class="city-context">${item.context}</span>`;
                 else card.textContent = item.display;
@@ -478,7 +473,19 @@
             const totalPages = Math.ceil(gameState.currentList.length / ITEMS_PER_PAGE) || 1;
             pageIndicator.textContent = `${gameState.currentPage + 1} / ${totalPages}`;
             btnPrev.disabled = gameState.currentPage === 0;
-            btnNext.disabled = gameState.currentPage >= totalPages - 1;
+
+            // --- Dynamic Proceed Button Logic ---
+            if (gameState.currentPage >= totalPages - 1) {
+                // We reached the final page of options: Change 'Next' to 'Next Level'
+                btnNext.textContent = gameState.level === 3 ? "Finish ➔" : "Next Level ➔";
+                btnNext.onclick = proceedToNextLevel;
+                btnNext.classList.add('proceed-mode');
+            } else {
+                // Not the final page: Normal 'Next' behavior
+                btnNext.textContent = "Next ▶";
+                btnNext.onclick = () => changePage(1);
+                btnNext.classList.remove('proceed-mode');
+            }
         }
 
         function toggleSelection(item, card) {
@@ -496,9 +503,8 @@
                 card.classList.add('selected');
                 gameState.score += points;
                 
-                // Pulse score animation
                 uiScoreBadge.classList.remove('score-pulse');
-                void uiScoreBadge.offsetWidth; // Trigger reflow
+                void uiScoreBadge.offsetWidth;
                 uiScoreBadge.classList.add('score-pulse');
             }
 
@@ -528,7 +534,6 @@
                 selectionTray.appendChild(chip);
             });
             
-            // Auto scroll tray to newest item
             selectionTray.scrollLeft = 0;
         }
 
@@ -554,7 +559,6 @@
         function showResults() {
             SFX.fanfare();
             document.getElementById('main-view').style.display = 'none';
-            document.getElementById('controls-footer').style.display = 'none';
             document.getElementById('selection-tray').style.display = 'none';
             
             document.getElementById('results-view').classList.add('active');
