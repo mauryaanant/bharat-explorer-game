@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bharat Explorer: Premium Edition</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Desktop View: Centered & Padded */
+        body {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #831843 100%);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* The "App" Container */
+        #app-container {
+            width: 100%;
+            height: 100%;
+            max-width: 480px; /* Constrains width on laptops */
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        /* Give it rounded corners and floating look ONLY on laptops/tablets */
+        @media (min-width: 500px) {
+            #app-container {
+                height: 90vh;
+                border-radius: 30px;
+                border: 8px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* --- Header & Score --- */
+        header {
+            background: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            z-index: 10;
+        }
+
+        .brand h1 {
+            font-size: 1.3rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .score-badge {
+            background: var(--text-main);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: transform 0.1s ease;
+        }
+
+        .score-pulse {
+            animation: pulseScore 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: var(--success);
+        }
+
+        /* --- Inventory Tray --- */
+        .selection-tray {
+            background: #eef2ff;
+            padding: 12px 20px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            border-bottom: 1px solid #e0e7ff;
+            min-height: 56px;
+            align-items: center;
+            scrollbar-width: none;
+            box-shadow: inset 0 -2px 10px rgba(0,0,0,0.02);
+        }
+        
+        .selection-tray::-webkit-scrollbar { display: none; }
+
+        .chip {
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            color: white;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
+        }
+
+        .empty-tray-text {
+            color: #818cf8;
+            font-size: 0.9rem;
+            font-style: italic;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* --- Main Content --- */
+        main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-color);
+        }
+
+        .level-info {
+            text-align: center;
+            margin-bottom: 20px;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .level-info h2 { font-size: 1.4rem; color: var(--text-main); margin-bottom: 4px; }
+        .level-info p { font-size: 0.95rem; color: var(--text-muted); }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        /* Card Animations & Styling */
+        .option-card {
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: var(--radius);
+            font-size: 1.15rem;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border: 2px solid #f1f5f9;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            opacity: 0;
+            transform: translateX(30px);
+            animation: slideInRight 0.4s forwards ease-out;
+        }
+
+        .option-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+        }
+
+        .option-card.selected {
+            background: #fdf2f8;
+            border-color: var(--secondary);
+            color: var(--secondary);
+            transform: scale(0.97);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .city-context {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        /* --- Footer Controls --- */
+        .controls-footer {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 -4px 25px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .icon-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: bold;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .icon-btn:active { transform: scale(0.95); }
+        .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .page-indicator {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .action-btn:active { transform: scale(0.98); }
+
+        /* --- Animations --- */
+        @keyframes slideInRight {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulseScore {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Results Screen */
+        .results-view {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+            background: white;
+            height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .results-view.active { display: flex; animation: fadeIn 0.6s ease; }
+        .final-score {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <div class="brand"><h1>Bharat Explorer</h1></div>
+            <div class="score-badge" id="ui-score-badge">🏆 <span id="ui-score">0</span></div>
+        </header>
+
+        <div class="selection-tray" id="selection-tray">
+            <span class="empty-tray-text">Select items below...</span>
+        </div>
+
+        <main id="main-view">
+            <div class="level-info">
+                <h2 id="level-title">Level 1: States</h2>
+                <p id="level-desc">Tap the states you've visited.</p>
+            </div>
+            <div class="options-container" id="options-container">
+                <!-- Cards injected here -->
+            </div>
+        </main>
+
+        <div class="results-view" id="results-view">
+            <h2>Journey Complete!</h2>
+            <div class="final-score" id="res-score">0</div>
+            <h3 id="res-rank" style="color: var(--success); margin-bottom: 15px; font-size: 1.5rem;">Explorer</h3>
+            <p id="res-summary" style="color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem; line-height: 1.6;"></p>
+            <button class="action-btn" onclick="location.reload()" style="max-width: 80%;">Play Again</button>
+        </div>
+
+        <div class="controls-footer" id="controls-footer">
+            <div class="pagination" id="pagination-controls">
+                <button class="icon-btn" id="btn-prev" onclick="changePage(-1)">◀ Prev</button>
+                <span class="page-indicator" id="page-indicator">1 / 5</span>
+                <button class="icon-btn" id="btn-next" onclick="changePage(1)">Next ▶</button>
+            </div>
+            <button class="action-btn" id="btn-proceed" onclick="proceedToNextLevel()">Proceed ➔</button>
+        </div>
+    </div>
+
+    <script>
+        // --- SYNTHESIZED AUDIO ENGINE (Web Audio API) ---
+        // Generates sounds dynamically so we don't need external files!
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration, vol=0.1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        const SFX = {
+            select: () => playTone(600, 'sine', 0.15, 0.2),
+            deselect: () => playTone(300, 'sine', 0.15, 0.1),
+            pageTurn: () => playTone(400, 'triangle', 0.1, 0.1),
+            levelUp: () => {
+                playTone(400, 'sine', 0.2, 0.2);
+                setTimeout(() => playTone(500, 'sine', 0.2, 0.2), 100);
+                setTimeout(() => playTone(600, 'sine', 0.4, 0.2), 200);
+            },
+            fanfare: () => {
+                [400, 500, 600, 800].forEach((freq, i) => {
+                    setTimeout(() => playTone(freq, 'square', 0.3, 0.1), i * 150);
+                });
+            }
+        };
+
+        // --- EXPANDED DATABASE ---
+        const indiaDatabase = {
+            states: {
+                "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Tirupati", "Guntur", "Nellore"],
+                "Arunachal Pradesh": ["Itanagar", "Tawang", "Ziro", "Pasighat"],
+                "Assam": ["Guwahati", "Dibrugarh", "Silchar", "Tezpur", "Jorhat"],
+                "Bihar": ["Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga"],
+                "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Jagdalpur"],
+                "Goa": ["Panaji", "Margao", "Vasco da Gama", "Calangute", "Baga"],
+                "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar"],
+                "Haryana": ["Gurugram", "Faridabad", "Panchkula", "Ambala", "Rohtak"],
+                "Himachal Pradesh": ["Shimla", "Manali", "Dharamshala", "Mandi", "Dalhousie"],
+                "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Deoghar"],
+                "Karnataka": ["Bengaluru", "Mysuru", "Mangaluru", "Hampi", "Hubli"],
+                "Kerala": ["Kochi", "Thiruvananthapuram", "Kozhikode", "Munnar", "Alappuzha"],
+                "Madhya Pradesh": ["Indore", "Bhopal", "Gwalior", "Jabalpur", "Ujjain"],
+                "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad"],
+                "Manipur": ["Imphal", "Ukhrul", "Churachandpur", "Thoubal"],
+                "Meghalaya": ["Shillong", "Cherrapunji", "Tura", "Jowai"],
+                "Mizoram": ["Aizawl", "Lunglei", "Champhai", "Serchhip"],
+                "Nagaland": ["Kohima", "Dimapur", "Mokokchung", "Wokha"],
+                "Odisha": ["Bhubaneswar", "Cuttack", "Puri", "Rourkela", "Konark"],
+                "Punjab": ["Amritsar", "Ludhiana", "Jalandhar", "Patiala", "Mohali"],
+                "Rajasthan": ["Jaipur", "Udaipur", "Jodhpur", "Jaisalmer", "Pushkar"],
+                "Sikkim": ["Gangtok", "Pelling", "Namchi", "Lachung"],
+                "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Ooty", "Kanyakumari"],
+                "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Khammam"],
+                "Tripura": ["Agartala", "Udaipur", "Dharmanagar", "Kailasahar"],
+                "Uttar Pradesh": ["Lucknow", "Varanasi", "Agra", "Kanpur", "Prayagraj"],
+                "Uttarakhand": ["Dehradun", "Haridwar", "Rishikesh", "Nainital", "Mussoorie"],
+                "West Bengal": ["Kolkata", "Darjeeling", "Siliguri", "Digha", "Howrah"]
+            },
+            uts: {
+                "Andaman & Nicobar": ["Port Blair", "Havelock", "Neil Island"],
+                "Chandigarh": ["Sector 17", "Sukhna Lake", "Rock Garden"],
+                "D&N Haveli and D&D": ["Daman", "Diu", "Silvassa"],
+                "Delhi": ["New Delhi", "Connaught Place", "Hauz Khas", "Dwarka"],
+                "Jammu & Kashmir": ["Srinagar", "Jammu", "Gulmarg", "Pahalgam"],
+                "Ladakh": ["Leh", "Kargil", "Nubra Valley"],
+                "Lakshadweep": ["Kavaratti", "Agatti", "Bangaram"],
+                "Puducherry": ["White Town", "Auroville", "Karaikal"]
+            }
+        };
+
+        // --- GAME ENGINE ---
+        const ITEMS_PER_PAGE = 5;
+        let gameState = { level: 1, currentList: [], currentPage: 0, selectedItems: new Set(), score: 0 };
+
+        // DOM Elements
+        const uiScore = document.getElementById('ui-score');
+        const uiScoreBadge = document.getElementById('ui-score-badge');
+        const selectionTray = document.getElementById('selection-tray');
+        const optionsContainer = document.getElementById('options-container');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const pageIndicator = document.getElementById('page-indicator');
+
+        function initLevel() {
+            gameState.currentPage = 0;
+            const title = document.getElementById('level-title');
+            const desc = document.getElementById('level-desc');
+            const btnProceed = document.getElementById('btn-proceed');
+
+            if (gameState.level === 1) {
+                title.textContent = "Level 1: States";
+                desc.textContent = "Select the states you've visited. (+100 pts)";
+                gameState.currentList = Object.keys(indiaDatabase.states).map(name => ({ id: name, display: name, type: 'state' }));
+                btnProceed.textContent = "Proceed to UTs ➔";
+            } 
+            else if (gameState.level === 2) {
+                title.textContent = "Level 2: Union Territories";
+                desc.textContent = "Any Union Territories visited? (+100 pts)";
+                gameState.currentList = Object.keys(indiaDatabase.uts).map(name => ({ id: name, display: name, type: 'ut' }));
+                btnProceed.textContent = "Proceed to Cities ➔";
+            } 
+            else if (gameState.level === 3) {
+                title.textContent = "Level 3: Deep Dive";
+                desc.textContent = "Which specific cities did you explore? (+50 pts)";
+                btnProceed.textContent = "Calculate Final Score ➔";
+                
+                let cityArray = [];
+                gameState.selectedItems.forEach(id => {
+                    let region = id.split('|')[0];
+                    let cities = indiaDatabase.states[region] || indiaDatabase.uts[region];
+                    if (cities) cities.forEach(city => cityArray.push({ id: `${region}|${city}`, display: city, context: region, type: 'city' }));
+                });
+                
+                gameState.currentList = cityArray.sort((a, b) => a.context.localeCompare(b.context));
+                if(gameState.currentList.length === 0) return showResults();
+            }
+
+            renderPage();
+            updateTray();
+        }
+
+        function renderPage() {
+            optionsContainer.innerHTML = '';
+            const startIdx = gameState.currentPage * ITEMS_PER_PAGE;
+            const pageItems = gameState.currentList.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+
+            pageItems.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `option-card ${gameState.selectedItems.has(item.id) ? 'selected' : ''}`;
+                card.style.animationDelay = `${index * 0.05}s`; // Staggered animation
+                
+                if (item.type === 'city') card.innerHTML = `${item.display} <span class="city-context">${item.context}</span>`;
+                else card.textContent = item.display;
+
+                card.onclick = () => toggleSelection(item, card);
+                optionsContainer.appendChild(card);
+            });
+
+            const totalPages = Math.ceil(gameState.currentList.length / ITEMS_PER_PAGE) || 1;
+            pageIndicator.textContent = `${gameState.currentPage + 1} / ${totalPages}`;
+            btnPrev.disabled = gameState.currentPage === 0;
+            btnNext.disabled = gameState.currentPage >= totalPages - 1;
+        }
+
+        function toggleSelection(item, card) {
+            const isSelected = gameState.selectedItems.has(item.id);
+            const points = item.type === 'city' ? 50 : 100;
+
+            if (isSelected) {
+                SFX.deselect();
+                gameState.selectedItems.delete(item.id);
+                card.classList.remove('selected');
+                gameState.score -= points;
+            } else {
+                SFX.select();
+                gameState.selectedItems.add(item.id);
+                card.classList.add('selected');
+                gameState.score += points;
+                
+                // Pulse score animation
+                uiScoreBadge.classList.remove('score-pulse');
+                void uiScoreBadge.offsetWidth; // Trigger reflow
+                uiScoreBadge.classList.add('score-pulse');
+            }
+
+            uiScore.textContent = gameState.score;
+            updateTray();
+        }
+
+        function updateTray() {
+            selectionTray.innerHTML = '';
+            let displayItems = [];
+            
+            gameState.selectedItems.forEach(id => {
+                let parts = id.split('|');
+                if (gameState.level <= 2 && parts.length === 1) displayItems.push(id);
+                else if (gameState.level === 3 && parts.length === 2) displayItems.push(parts[1]);
+            });
+
+            if (displayItems.length === 0) {
+                selectionTray.innerHTML = `<span class="empty-tray-text">${gameState.level===3 ? 'Select cities below...' : 'Select states below...'}</span>`;
+                return;
+            }
+
+            displayItems.reverse().forEach(name => {
+                const chip = document.createElement('span');
+                chip.className = 'chip';
+                chip.textContent = name;
+                selectionTray.appendChild(chip);
+            });
+            
+            // Auto scroll tray to newest item
+            selectionTray.scrollLeft = 0;
+        }
+
+        function changePage(dir) {
+            const total = Math.ceil(gameState.currentList.length / ITEMS_PER_PAGE);
+            if (gameState.currentPage + dir >= 0 && gameState.currentPage + dir < total) {
+                SFX.pageTurn();
+                gameState.currentPage += dir;
+                renderPage();
+            }
+        }
+
+        function proceedToNextLevel() {
+            if (gameState.level < 3) {
+                SFX.levelUp();
+                gameState.level++;
+                initLevel();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            SFX.fanfare();
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('controls-footer').style.display = 'none';
+            document.getElementById('selection-tray').style.display = 'none';
+            
+            document.getElementById('results-view').classList.add('active');
+            document.getElementById('res-score').textContent = gameState.score;
+
+            let statesUtsCount = 0, citiesCount = 0;
+            gameState.selectedItems.forEach(id => id.includes('|') ? citiesCount++ : statesUtsCount++);
+
+            let rank = "Homebody 🏠";
+            if (gameState.score > 2500) rank = "Maharaja Explorer 👑";
+            else if (gameState.score > 1200) rank = "Seasoned Backpacker 🎒";
+            else if (gameState.score > 400) rank = "Weekend Wanderer 🧭";
+
+            document.getElementById('res-rank').textContent = rank;
+            document.getElementById('res-summary').innerHTML = 
+                `You have conquered <strong>${statesUtsCount}</strong> States & UTs<br>and left your footprints in <strong>${citiesCount}</strong> unique cities across India!`;
+        }
+
+        // Initialize First Level on Load
+        initLevel();
+    </script>
+</body>
+</html>
